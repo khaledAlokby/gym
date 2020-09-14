@@ -3,10 +3,12 @@ package com.wix.gym.model;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.util.Objects;
-
+import java.io.Serializable;
+import java.util.*;
+import javax.persistence.Lob;
 @Entity
-public class Class {
+public class Class implements Serializable {
+
 
 
     @Id
@@ -19,7 +21,10 @@ public class Class {
     private int duration;
     private int maxParticNum;
     private String instructor;
-
+    @Lob
+    private HashSet<Customer> bookers = new HashSet<>();
+    @Lob
+    private LinkedList<Customer> waitList= new LinkedList<>();
     public Class() {
     }
 
@@ -90,6 +95,42 @@ public class Class {
         this.duration = duration;
     }
 
+    public HashSet<Customer> getBookers() {
+        return bookers;
+    }
+
+    /*public void setBookers(Customer booker) {
+        lock.lock();
+        if (bookers.size() < maxParticNum){
+            bookers.add(booker);
+            classRepository.save(this);
+        }
+        lock.unlock();
+
+    }*/
+
+    public void setBookers(HashSet<Customer> bookers) {
+        this.bookers = bookers;
+    }
+
+    public void setWaitList(LinkedList<Customer> waitList) {
+        this.waitList = waitList;
+    }
+
+    public LinkedList<Customer> getWaitList() {
+        return waitList;
+    }
+
+    /*public void setWaitList(Customer waitCustomer) {
+        lock.lock();
+        if (bookers.size() >= maxParticNum) {
+            waitList.add(waitCustomer);
+            classRepository.save(this);
+        }
+        lock.unlock();
+
+    }
+*/
 
     @Override
     public boolean equals(Object o) {
@@ -117,5 +158,23 @@ public class Class {
                 ", price=" + price +
                 ", maxParticNum=" + maxParticNum +
                 '}';
+    }
+
+    public void book(Customer customer){
+        this.bookers.add(customer);
+    }
+
+    public void waitList(Customer customer) {
+        this.waitList.offer(customer);
+    }
+
+    public Customer cancel(Customer customer) {
+        bookers.remove(customer);
+        if (!waitList.isEmpty()){
+            Customer newCustomer = waitList.poll();
+            bookers.add(newCustomer);
+            return newCustomer;
+        }
+        return null;
     }
 }
